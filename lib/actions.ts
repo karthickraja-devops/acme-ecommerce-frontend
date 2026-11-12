@@ -1,56 +1,181 @@
 "use server";
 
-import optimizely from "@optimizely/optimizely-sdk";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
-export async function trackProductPurchase() {
-  const client = optimizely.createInstance({
-    sdkKey: process.env.OPTIMIZELY_SDK_KEY!,
-  });
+export async function addCartItem(
+  productId: number,
+  selectedSize: string | null,
+) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("access_token")?.value;
+  const apiUrl = process.env.NEST_API_URL;
 
-  if (!client) {
-    throw new Error("Failed to create client");
+  if (!accessToken || !apiUrl) {
+    return { success: false, message: "Please log in again." };
   }
 
-  await client.onReady();
+  try {
+    const response = await fetch(`${apiUrl}/cart/items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        productId,
+        quantity: 1,
+        selectedSize,
+      }),
+      cache: "no-store",
+    });
 
+    if (!response.ok) {
+      if (response.status === 403) {
+        return {
+          success: false,
+          message: "You do not have permission to add products to the cart.",
+        };
+      }
+
+      const error = await response.json().catch(() => null);
+
+      return {
+        success: false,
+        message: error?.message || "Could not add this product to your cart.",
+      };
+    }
+
+    revalidatePath("/cart");
+    return { success: true, message: "Product added to your cart!" };
+  } catch {
+    return { success: false, message: "Could not connect to the store." };
+  }
+}
+
+export async function removeCartItem(cartItemId: number) {
   const cookieStore = await cookies();
-  const shopper = cookieStore.get("shopper")?.value;
-  const context = client?.createUserContext(shopper);
+  const accessToken = cookieStore.get("access_token")?.value;
+  const apiUrl = process.env.NEST_API_URL;
 
-  if (!context) {
-    throw new Error("Failed to create user context");
+  if (!accessToken || !apiUrl) {
+    return { success: false, message: "Please log in again." };
   }
 
-  context.trackEvent("product_purchase");
-}
+  try {
+    const response = await fetch(`${apiUrl}/cart/items/${cartItemId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+    });
 
-export async function addToCart(productId: string) {
-  const cookieStore = await cookies();
-  let cartItems: string[] = [];
-  if (cookieStore.has("cart")) {
-    cartItems = JSON.parse(cookieStore.get("cart")?.value!) as string[];
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      return {
+        success: false,
+        message: error?.message || "Could not remove this item.",
+      };
+    }
+
+    revalidatePath("/cart");
+    return { success: true, message: "Item removed from cart." };
+  } catch {
+    return { success: false, message: "Could not connect to the store." };
   }
-  cookieStore.set(
-    "cart",
-    JSON.stringify([...cartItems.filter((i) => i !== productId), productId])
-  );
 }
 
-export async function removeFromCart(productId: string) {
+export async function updateCartItem(
+  cartItemId: number,
+  quantity: number,
+) {
   const cookieStore = await cookies();
-  const cartItems = JSON.parse(cookieStore.get("cart")?.value!) as string[];
-  cookieStore.set(
-    "cart",
-    JSON.stringify(cartItems.filter((i) => i !== productId))
-  );
-  redirect("/cart");
+  const accessToken = cookieStore.get("access_token")?.value;
+  const apiUrl = process.env.NEST_API_URL;
+
+  if (!accessToken || !apiUrl) {
+    return { success: false, message: "Please log in again." };
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/cart/items/${cartItemId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ quantity }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      return {
+        success: false,
+        message: error?.message || "Could not update the quantity.",
+      };
+    }
+
+    revalidatePath("/cart");
+    return { success: true, message: "Cart quantity updated." };
+  } catch {
+    return { success: false, message: "Could not connect to the store." };
+  }
 }
 
-export async function placeOrder() {
+
+export async function deleteProduct(productId: number) {
   const cookieStore = await cookies();
-  cookieStore.set("cart", JSON.stringify([]));
-  await trackProductPurchase();
-  redirect("/success");
+  const accessToken = cookieStore.get("access_token")?.value;
+  const apiUrl = process.env.NEST_API_URL;
+
+  if (!accessToken || !apiUrl) {
+    return {
+      success: false,
+      message: "Please log in again.",
+    };
+  }
+
+  if (!Number.isInteger(productId) || productId < 1) {
+    return {
+      success: false,
+      message: "Invalid product ID.",
+    };
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/products/${productId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+
+      return {
+        success: false,
+        message:
+          error?.message || "Could not delete this product.",
+      };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/products");
+    revalidatePath("/product/[slug]", "page");
+
+    return {
+      success: true,
+      message: "Product deleted successfully.",
+    };
+  } catch {
+    return {
+      success: false,
+      message: "Could not connect to the store.",
+    };
+  }
 }
+

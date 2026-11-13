@@ -7,9 +7,18 @@ export const config = {
 };
 
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
-  const response = NextResponse.next();
+  let response = NextResponse.next();
 
-  // Set a shopper cookie if one doesn't exist or has been cleared.
+  // Route the homepage to the default variant.
+  if (request.nextUrl.pathname === "/") {
+    const nextUrl = new URL(
+      `/default${request.nextUrl.pathname}${request.nextUrl.search}`,
+      request.url
+    );
+    response = NextResponse.rewrite(nextUrl, { request });
+  }
+
+  // Set a shopper cookie if one doesn't exist.
   if (!request.cookies.has("shopper")) {
     const newShopperId = Math.random().toString(36).substring(2);
     response.cookies.set("shopper", newShopperId);

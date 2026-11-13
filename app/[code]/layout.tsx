@@ -7,5 +7,5 @@ export default function Layout({
 }
 
 export async function generateStaticParams() {
-  return [];
+  return [{ code: "default" }];
 }

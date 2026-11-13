@@ -8,6 +8,12 @@ frontend:
         - pnpm install --frozen-lockfile
     build:
       commands:
+        - echo "FLAGS_SECRET=$FLAGS_SECRET" >> .env.production
+        - echo "COGNITO_DOMAIN=$COGNITO_DOMAIN" >> .env.production
+        - echo "COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID" >> .env.production
+        - echo "COGNITO_CLIENT_SECRET=$COGNITO_CLIENT_SECRET" >> .env.production
+        - echo "COGNITO_REDIRECT_URI=$COGNITO_REDIRECT_URI" >> .env.production
+        - echo "COGNITO_USER_POOL_ID=$COGNITO_USER_POOL_ID" >> .env.production
         - pnpm run build
   artifacts:
     baseDirectory: .next

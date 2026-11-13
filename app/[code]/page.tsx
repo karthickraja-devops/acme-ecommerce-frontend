@@ -10,7 +10,6 @@ import { getProductsFromApi, type ApiProduct } from "@/lib/products-api";
 import Link from "next/link";
 import Image from "next/image";
 
-import { precomputeFlags, showPromoBannerFlag } from "@/lib/flags";
 
 type StoreProduct = ApiProduct & {
   slug: string;
@@ -30,10 +29,7 @@ export default async function Home(props: {
 
   const params = await props.params;
 
-  const showPromoBanner = await showPromoBannerFlag(
-    params.code,
-    precomputeFlags
-  );
+  const showPromoBanner = false;
 
   // Load active products from NestJS / MySQL.
   const apiProducts = await getProductsFromApi();

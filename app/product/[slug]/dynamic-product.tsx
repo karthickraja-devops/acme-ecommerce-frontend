@@ -167,7 +167,6 @@ export const DynamicProduct = async (props: {
           <DeleteProductButton productId={product.id} />
         </div>
       </div>
-    </div >
     </>
   );
 };

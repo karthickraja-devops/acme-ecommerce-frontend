@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@types/react': npm:types-react@19.0.0-rc.1
+  '@types/react-dom': npm:types-react-dom@19.0.0-rc.1
+
 importers:
 
   .:
@@ -818,9 +822,6 @@ packages:
 
   '@types/node@20.17.6':
     resolution: {integrity: sha512-VEI7OdvK2wP7XHnsuXbAJnEpEkF6NjSN45QJlL4VGqZSXsnicpesdTWsg9RISeSdYd3yeRj/y3k5KGjUXYnFwQ==}
-
-  '@types/react@19.3.0':
-    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
 
   '@typescript-eslint/eslint-plugin@8.13.0':
     resolution: {integrity: sha512-nQtBLiZYMUPkclSeC3id+x4uVd1SGtHuElTxL++SfP47jR0zfkZBJHc+gL4qPsgTuypz0k8Y2GheaDYn6Gy3rg==}
@@ -3067,10 +3068,6 @@ snapshots:
     dependencies:
       undici-types: 6.19.8
 
-  '@types/react@19.3.0':
-    dependencies:
-      csstype: 3.2.3
-
   '@typescript-eslint/eslint-plugin@8.13.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3))(eslint@8.57.1(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
@@ -4818,7 +4815,7 @@ snapshots:
 
   types-react-dom@19.0.0-rc.1:
     dependencies:
-      '@types/react': 19.3.0
+      '@types/react': types-react@19.0.0-rc.1
 
   types-react@19.0.0-rc.1:
     dependencies:

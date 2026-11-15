@@ -14,6 +14,11 @@ const CLIENT_SECRET = process.env.COGNITO_CLIENT_SECRET!;
 const REDIRECT_URI =
   process.env.COGNITO_REDIRECT_URI!;
 
+const APP_ORIGIN =
+  process.env.NODE_ENV === "production"
+    ? "https://main.d1el50avm6emyv.amplifyapp.com"
+    : "http://localhost:3000";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,8 +29,7 @@ export async function GET(request: NextRequest) {
 
     if (cognitoError) {
       return NextResponse.redirect(
-        new URL("/?authError=login_failed", request.url)
-      );
+        new URL("/?authError=login_failed", APP_ORIGIN));
     }
 
     const savedState = request.cookies.get("oauth_state")?.value;
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
       state !== savedState
     ) {
       return NextResponse.redirect(
-        new URL("/?authError=invalid_callback", request.url)
+        new URL("/?authError=invalid_callback", APP_ORIGIN)
       );
     }
 
@@ -75,7 +79,8 @@ export async function GET(request: NextRequest) {
       );
 
       return NextResponse.redirect(
-        new URL("/?authError=token_exchange_failed", request.url)
+        new URL("/?authError=token_exchange_failed", APP_ORIGIN)
+        
       );
     }
     const tokens = await tokenResponse.json();
@@ -87,12 +92,12 @@ export async function GET(request: NextRequest) {
 
     if (!tokens.access_token || !tokens.id_token) {
       return NextResponse.redirect(
-        new URL("/?authError=missing_tokens", request.url)
+        new URL("/?authError=missing_tokens", APP_ORIGIN)
       );
     }
 
     const response = NextResponse.redirect(
-      new URL("/", request.url)
+      new URL("/", APP_ORIGIN)
     );
 
     const cookieOptions = {
@@ -127,7 +132,7 @@ export async function GET(request: NextRequest) {
     console.error("Cognito callback error:", error);
 
     return NextResponse.redirect(
-      new URL("/?authError=callback_failed", request.url)
+      new URL("/?authError=callback_failed", APP_ORIGIN)
     );
   }
 }
